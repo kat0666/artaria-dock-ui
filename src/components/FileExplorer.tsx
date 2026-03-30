@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Folder, File, RefreshCw } from 'lucide-react';
+import { useEditor } from '../context/EditorContext';
 
 interface FileEntry {
   name: string;
@@ -8,13 +9,17 @@ interface FileEntry {
   modified: number;
 }
 
-interface FileExplorerProps {
-  activeFilePath: string | null;
-  setActiveFilePath: (path: string) => void;
-  setFileContent: (content: string) => void;
+interface FSListResponse {
+  entries: FileEntry[];
 }
 
-export default function FileExplorer({ activeFilePath, setActiveFilePath, setFileContent }: FileExplorerProps) {
+interface FSReadResponse {
+  path: string;
+  content: string;
+}
+
+export default function FileExplorer() {
+  const { activeFilePath, setActiveFilePath, setFileContent } = useEditor();
   const [directory, setDirectory] = useState<string>('C:/');
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,10 +32,10 @@ export default function FileExplorer({ activeFilePath, setActiveFilePath, setFil
     try {
       const res = await fetch(`http://localhost:8099/fs/list?directory=${encodeURIComponent(directory)}`);
       if (!res.ok) throw new Error('Failed to load directory');
-      const data = await res.json();
+      const data: FSListResponse = await res.json();
       setEntries(data.entries || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -46,10 +51,10 @@ export default function FileExplorer({ activeFilePath, setActiveFilePath, setFil
       try {
         const res = await fetch(`http://localhost:8099/fs/list?directory=${encodeURIComponent(newDir)}`);
         if (!res.ok) throw new Error('Failed to load directory');
-        const data = await res.json();
+        const data: FSListResponse = await res.json();
         setEntries(data.entries || []);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : String(err));
       } finally {
         setLoading(false);
       }
@@ -61,12 +66,13 @@ export default function FileExplorer({ activeFilePath, setActiveFilePath, setFil
       try {
         const res = await fetch(`http://localhost:8099/fs/read?filepath=${encodeURIComponent(filePath)}`);
         if (!res.ok) throw new Error('Failed to read file');
-        const data = await res.json();
+        const data: FSReadResponse = await res.json();
         setActiveFilePath(data.path || filePath);
         setFileContent(data.content || '');
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
         console.error(err);
-        alert('Error reading file: ' + err.message);
+        alert('Error reading file: ' + message);
       }
     }
   };
@@ -94,7 +100,7 @@ export default function FileExplorer({ activeFilePath, setActiveFilePath, setFil
         </div>
         {error && <div className="text-xs text-red-400 mt-1">{error}</div>}
       </div>
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 min-h-0 overflow-y-auto p-2">
         {entries.length === 0 && !loading && !error && (
           <div className="text-xs text-gray-500 text-center mt-4">No files loaded</div>
         )}

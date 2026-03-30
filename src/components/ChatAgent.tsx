@@ -1,9 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Code, Loader2 } from 'lucide-react';
+import { useEditor } from '../context/EditorContext';
 
 interface Message {
   role: 'user' | 'system' | 'assistant';
   content: string;
+}
+
+interface ChatResponse {
+  response: string;
 }
 
 interface ChatAgentProps {
@@ -14,10 +19,10 @@ interface ChatAgentProps {
     thread_id: string;
   };
   onClose: () => void;
-  editorContent: string;
 }
 
-export default function ChatAgent({ agent, onClose, editorContent }: ChatAgentProps) {
+export default function ChatAgent({ agent, onClose }: ChatAgentProps) {
+  const { fileContent } = useEditor();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,25 +54,26 @@ export default function ChatAgent({ agent, onClose, editorContent }: ChatAgentPr
           model: agent.model,
           messages: newMessages,
           thread_id: agent.thread_id,
-          agent_id: agent.model,
+          agent_id: agent.id,
         }),
       });
 
       if (!res.ok) throw new Error('Chat request failed');
-      const data = await res.json();
+      const data: ChatResponse = await res.json();
       
       setMessages([...newMessages, { role: 'assistant', content: data.response }]);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error(err);
-      setMessages([...newMessages, { role: 'assistant', content: `Error: ${err.message}` }]);
+      setMessages([...newMessages, { role: 'assistant', content: `Error: ${message}` }]);
     } finally {
       setLoading(false);
     }
   };
 
   const injectCode = () => {
-    if (!editorContent) return;
-    setInput((prev) => prev + (prev ? '\n\n' : '') + '```\n' + editorContent + '\n```\n');
+    if (!fileContent) return;
+    setInput((prev) => prev + (prev ? '\n\n' : '') + '```\n' + fileContent + '\n```\n');
   };
 
   return (
@@ -82,7 +88,7 @@ export default function ChatAgent({ agent, onClose, editorContent }: ChatAgentPr
         </button>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">
         {messages.length === 0 && (
           <div className="text-xs text-gray-500 text-center mt-2">Start a conversation...</div>
         )}
