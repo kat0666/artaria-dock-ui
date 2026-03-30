@@ -4,7 +4,6 @@ import ChatAgent from './ChatAgent';
 
 interface AgentsPanelProps {
   models: { id: string }[];
-  fileContent: string;
 }
 
 interface AgentInstance {
@@ -13,7 +12,7 @@ interface AgentInstance {
   thread_id: string;
 }
 
-export default function AgentsPanel({ models, fileContent }: AgentsPanelProps) {
+export default function AgentsPanel({ models }: AgentsPanelProps) {
   const [agents, setAgents] = useState<AgentInstance[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
 
@@ -65,7 +64,7 @@ export default function AgentsPanel({ models, fileContent }: AgentsPanelProps) {
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-4">
         {agents.length === 0 ? (
           <div className="text-xs text-gray-500 text-center mt-4">
             No agents spawned. Select a model and click + to start.
@@ -76,7 +75,6 @@ export default function AgentsPanel({ models, fileContent }: AgentsPanelProps) {
               key={agent.id}
               agent={agent}
               onClose={() => removeAgent(agent.id)}
-              editorContent={fileContent}
             />
           ))
         )}

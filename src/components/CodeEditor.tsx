@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { Save, Check } from 'lucide-react';
+import { useEditor } from '../context/EditorContext';
 
-interface CodeEditorProps {
-  activeFilePath: string | null;
-  fileContent: string;
-  setFileContent: (content: string) => void;
-}
-
-export default function CodeEditor({ activeFilePath, fileContent, setFileContent }: CodeEditorProps) {
+export default function CodeEditor() {
+  const { activeFilePath, fileContent, setFileContent } = useEditor();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -24,9 +20,10 @@ export default function CodeEditor({ activeFilePath, fileContent, setFileContent
       if (!res.ok) throw new Error('Save failed');
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error(err);
-      alert('Failed to save: ' + err.message);
+      alert('Failed to save: ' + message);
     } finally {
       setSaving(false);
     }
