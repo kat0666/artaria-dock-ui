@@ -104,17 +104,18 @@ export default function FileExplorer() {
         {entries.length === 0 && !loading && !error && (
           <div className="text-xs text-gray-500 text-center mt-4">No files loaded</div>
         )}
-        {entries.map((entry, idx) => {
-          const isDir = entry.type === 'dir';
-          const filePath = directory.endsWith('/') || directory.endsWith('\\') 
-            ? `${directory}${entry.name}` 
-            : `${directory}/${entry.name}`;
-          const isActive = activeFilePath === filePath;
+        {(() => {
+          const dirPrefix = directory.endsWith('/') || directory.endsWith('\\') ? directory : `${directory}/`;
 
-          return (
-            <div
-              key={idx}
-              onClick={() => handleFileClick(entry)}
+          return entries.map((entry, idx) => {
+            const isDir = entry.type === 'dir';
+            const filePath = `${dirPrefix}${entry.name}`;
+            const isActive = activeFilePath === filePath;
+
+            return (
+              <div
+                key={idx}
+                onClick={() => handleFileClick(entry)}
               className={`flex items-center gap-2 px-2 py-1 cursor-pointer rounded text-sm select-none ${
                 isActive ? 'bg-blue-900/50 text-blue-200' : 'hover:bg-gray-800 text-gray-300'
               }`}
@@ -123,7 +124,8 @@ export default function FileExplorer() {
               <span className="truncate">{entry.name}</span>
             </div>
           );
-        })}
+        });
+        })()}
       </div>
     </div>
   );
